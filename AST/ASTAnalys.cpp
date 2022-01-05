@@ -14,7 +14,6 @@ static void rewrite_branches(std::vector<Block>& bloks, unsigned cur_bb, unsigne
         rewrite_branches(bloks, casted_inst->bb_cond_, casted_inst->bb_next_);
     } else {
         // need insert
-        std::cout << "Insert last bb" << std::endl;
         bb.lines.push_back(new BranchInst(next_bb));
     }
 }

@@ -55,8 +55,8 @@
 
 %%
 
-input: input block {drv.result.blocks.push_back($2);}
-     | block       {drv.result.blocks.push_back($1);}
+input: input block {}
+     | block       {}
      |             {}
 ;
 block: lines IF L_PAR expr_ret R_PAR L_BRA block R_BRA block
@@ -66,11 +66,12 @@ block: lines IF L_PAR expr_ret R_PAR L_BRA block R_BRA block
                auto& next_block = $9;
                cmds.push_back(new AST::CondBranchInst($4, cond_block.ID, next_block.ID));
                $$ = AST::Block(cmds);
+               drv.result.blocks.push_back($$);
           }
      | lines 
           {
-               std::cout << "Found block\n";
                $$ = AST::Block($1);
+               drv.result.blocks.push_back($$);
           }
 ;
 lines: lines line { $1.push_back($2); $$ = $1; }

@@ -855,13 +855,13 @@ namespace yy {
             {
   case 2: // input: input block
 #line 58 "Parser.y"
-                   {drv.result.blocks.push_back(yystack_[0].value.as < AST::Block > ());}
+                   {}
 #line 860 "Parser.cc"
     break;
 
   case 3: // input: block
 #line 59 "Parser.y"
-                   {drv.result.blocks.push_back(yystack_[0].value.as < AST::Block > ());}
+                   {}
 #line 866 "Parser.cc"
     break;
 
@@ -879,111 +879,112 @@ namespace yy {
                auto& next_block = yystack_[0].value.as < AST::Block > ();
                cmds.push_back(new AST::CondBranchInst(yystack_[5].value.as < AST::ExprBase* > (), cond_block.ID, next_block.ID));
                yylhs.value.as < AST::Block > () = AST::Block(cmds);
+               drv.result.blocks.push_back(yylhs.value.as < AST::Block > ());
           }
-#line 884 "Parser.cc"
+#line 885 "Parser.cc"
     break;
 
   case 6: // block: lines
-#line 71 "Parser.y"
+#line 72 "Parser.y"
           {
-               std::cout << "Found block\n";
                yylhs.value.as < AST::Block > () = AST::Block(yystack_[0].value.as < std::vector<AST::ExprBase*> > ());
+               drv.result.blocks.push_back(yylhs.value.as < AST::Block > ());
           }
-#line 893 "Parser.cc"
+#line 894 "Parser.cc"
     break;
 
   case 7: // lines: lines line
-#line 76 "Parser.y"
+#line 77 "Parser.y"
                   { yystack_[1].value.as < std::vector<AST::ExprBase*> > ().push_back(yystack_[0].value.as < AST::ExprBase* > ()); yylhs.value.as < std::vector<AST::ExprBase*> > () = yystack_[1].value.as < std::vector<AST::ExprBase*> > (); }
-#line 899 "Parser.cc"
+#line 900 "Parser.cc"
     break;
 
   case 8: // lines: line
-#line 77 "Parser.y"
+#line 78 "Parser.y"
                   { yylhs.value.as < std::vector<AST::ExprBase*> > ().push_back(yystack_[0].value.as < AST::ExprBase* > ()); }
-#line 905 "Parser.cc"
+#line 906 "Parser.cc"
     break;
 
   case 9: // lines: %empty
-#line 78 "Parser.y"
+#line 79 "Parser.y"
                   {}
-#line 911 "Parser.cc"
+#line 912 "Parser.cc"
     break;
 
   case 10: // line: expr_gen SEMI
-#line 80 "Parser.y"
+#line 81 "Parser.y"
                                        { yylhs.value.as < AST::ExprBase* > () = yystack_[1].value.as < AST::ExprBase* > (); }
-#line 917 "Parser.cc"
+#line 918 "Parser.cc"
     break;
 
   case 11: // expr_gen: expr_void
-#line 81 "Parser.y"
+#line 82 "Parser.y"
           { yylhs.value.as < AST::ExprBase* > () = yystack_[0].value.as < AST::ExprBase* > (); }
-#line 923 "Parser.cc"
+#line 924 "Parser.cc"
     break;
 
   case 12: // expr_gen: expr_ret
-#line 81 "Parser.y"
+#line 82 "Parser.y"
                       { yylhs.value.as < AST::ExprBase* > () = yystack_[0].value.as < AST::ExprBase* > (); }
-#line 929 "Parser.cc"
+#line 930 "Parser.cc"
     break;
 
   case 13: // expr_ret: NUM
-#line 82 "Parser.y"
+#line 83 "Parser.y"
                                        { yylhs.value.as < AST::ExprBase* > () = new AST::ConstLineral(atoi(yystack_[0].value.as < std::string > ().c_str()));}
-#line 935 "Parser.cc"
+#line 936 "Parser.cc"
     break;
 
   case 14: // expr_ret: NAME
-#line 83 "Parser.y"
+#line 84 "Parser.y"
                                        { yylhs.value.as < AST::ExprBase* > () = new AST::Variable(yystack_[0].value.as < std::string > ()); drv.result.variables.insert(yystack_[0].value.as < std::string > ()); }
-#line 941 "Parser.cc"
+#line 942 "Parser.cc"
     break;
 
   case 15: // expr_ret: expr_ret ASSIGN expr_ret
-#line 84 "Parser.y"
+#line 85 "Parser.y"
                                        { yylhs.value.as < AST::ExprBase* > () = new AST::AssignInst(yystack_[2].value.as < AST::ExprBase* > (), yystack_[0].value.as < AST::ExprBase* > ()); }
-#line 947 "Parser.cc"
+#line 948 "Parser.cc"
     break;
 
   case 16: // expr_ret: expr_ret DIV expr_ret
-#line 85 "Parser.y"
+#line 86 "Parser.y"
                                        { yylhs.value.as < AST::ExprBase* > () = new AST::BinaryInst(yystack_[2].value.as < AST::ExprBase* > (), yystack_[0].value.as < AST::ExprBase* > (), AST::BinaryInst::OP::DIV); }
-#line 953 "Parser.cc"
+#line 954 "Parser.cc"
     break;
 
   case 17: // expr_ret: expr_ret MUL expr_ret
-#line 86 "Parser.y"
+#line 87 "Parser.y"
                                        { yylhs.value.as < AST::ExprBase* > () = new AST::BinaryInst(yystack_[2].value.as < AST::ExprBase* > (), yystack_[0].value.as < AST::ExprBase* > (), AST::BinaryInst::OP::MUL); }
-#line 959 "Parser.cc"
+#line 960 "Parser.cc"
     break;
 
   case 18: // expr_ret: expr_ret MINUS expr_ret
-#line 87 "Parser.y"
+#line 88 "Parser.y"
                                        { yylhs.value.as < AST::ExprBase* > () = new AST::BinaryInst(yystack_[2].value.as < AST::ExprBase* > (), yystack_[0].value.as < AST::ExprBase* > (), AST::BinaryInst::OP::SUB); }
-#line 965 "Parser.cc"
+#line 966 "Parser.cc"
     break;
 
   case 19: // expr_ret: expr_ret PLUS expr_ret
-#line 88 "Parser.y"
+#line 89 "Parser.y"
                                        { yylhs.value.as < AST::ExprBase* > () = new AST::BinaryInst(yystack_[2].value.as < AST::ExprBase* > (), yystack_[0].value.as < AST::ExprBase* > (), AST::BinaryInst::OP::ADD); }
-#line 971 "Parser.cc"
+#line 972 "Parser.cc"
     break;
 
   case 20: // expr_ret: L_PAR expr_ret R_PAR
-#line 89 "Parser.y"
+#line 90 "Parser.y"
                                        { yylhs.value.as < AST::ExprBase* > () = yystack_[1].value.as < AST::ExprBase* > ();}
-#line 977 "Parser.cc"
+#line 978 "Parser.cc"
     break;
 
   case 21: // expr_void: NAME L_PAR expr_ret R_PAR
-#line 91 "Parser.y"
+#line 92 "Parser.y"
                                      {yylhs.value.as < AST::ExprBase* > () = new AST::FunctionCall(yystack_[3].value.as < std::string > (), yystack_[1].value.as < AST::ExprBase* > ()); drv.result.functions.insert(yystack_[3].value.as < std::string > ()); }
-#line 983 "Parser.cc"
+#line 984 "Parser.cc"
     break;
 
 
-#line 987 "Parser.cc"
+#line 988 "Parser.cc"
 
             default:
               break;
@@ -1270,9 +1271,9 @@ namespace yy {
   const signed char
   parser::yyrline_[] =
   {
-       0,    58,    58,    59,    60,    62,    70,    76,    77,    78,
-      80,    81,    81,    82,    83,    84,    85,    86,    87,    88,
-      89,    91
+       0,    58,    58,    59,    60,    62,    71,    77,    78,    79,
+      81,    82,    82,    83,    84,    85,    86,    87,    88,    89,
+      90,    92
   };
 
   void
@@ -1352,9 +1353,9 @@ namespace yy {
   }
 
 } // yy
-#line 1356 "Parser.cc"
+#line 1357 "Parser.cc"
 
-#line 93 "Parser.y"
+#line 94 "Parser.y"
 
 
 
