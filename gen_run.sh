@@ -14,5 +14,6 @@ $clang -c -w -g -I . Parser/Parser.cc      $llvm_flags -o obj/Parser.o
 $clang -c -w -g -I . Parser/lex.yy.cc      $llvm_flags -o obj/lex.o
 $clang -c -w -g -I . Parser/Driver.cpp     $llvm_flags -o obj/Driver.o
 $clang -c -w -g -I . Runtime/runtime.c     $llvm_flags -o obj/runtime.o
+$clang -c -w -g -I . Interpret/Interpret.cpp     $llvm_flags -o obj/Interpret.o
 
 $clang obj/*.o $llvm_flags -o a.out
