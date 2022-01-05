@@ -6,19 +6,17 @@
 #include <unordered_set>
 #include <string>
 
-
-
-struct CodegenerationVisitor;
-
 namespace AST {
 
-using ExprVisitor = CodegenerationVisitor;
+struct IVisitor;
+using ExprVisitor = IVisitor;
+
 struct ExprBase {
     virtual void dump() = 0;
     virtual bool is_ptr() { return false; } /* Codegen return value */
     virtual bool is_brnch() {return false; } /* This expr is brach instr */
 
-    virtual void on_visit(ExprVisitor&) = 0;
+    virtual void on_visit(ExprVisitor*) = 0;
 };
 
 struct ConstLineral : public ExprBase {
@@ -26,7 +24,7 @@ struct ConstLineral : public ExprBase {
     void dump() override {
         std::cout << val_;
     }
-    void on_visit(ExprVisitor& vi) override;
+    void on_visit(ExprVisitor* vi) override;
     int val_;
 };
 
@@ -50,7 +48,7 @@ struct BinaryInst : public ExprBase {
     }
 
     
-    void on_visit(ExprVisitor& vi) override;
+    void on_visit(ExprVisitor* vi) override;
 
     ExprBase* lhs_;
     ExprBase* rhs_;
@@ -74,7 +72,7 @@ struct CondBranchInst : public ExprBase {
         
     }
     
-    void on_visit(ExprVisitor& vi) override;
+    void on_visit(ExprVisitor* vi) override;
 
     bool is_brnch() { return true; }
     ExprBase* cond_;
@@ -93,7 +91,7 @@ struct BranchInst : public ExprBase {
         
     }
     
-    void on_visit(ExprVisitor& vi) override;
+    void on_visit(ExprVisitor* vi) override;
 
     bool is_brnch() { return true; }
     unsigned bb_next_ = -1;
@@ -106,7 +104,7 @@ struct Variable : public ExprBase {
     }
     
     bool is_ptr() override { return true; } /* Codegen function return an addr */
-    void on_visit(ExprVisitor& vi) override;
+    void on_visit(ExprVisitor* vi) override;
 
     std::string name_;
 };
@@ -124,7 +122,7 @@ struct AssignInst : public ExprBase {
     }
 
     
-    void on_visit(ExprVisitor& vi) override;
+    void on_visit(ExprVisitor* vi) override;
 
     ExprBase* lhs_;
     ExprBase* rhs_;
@@ -139,7 +137,7 @@ struct FunctionCall : public ExprBase {
         std::cout << "}"; 
     }
     
-    void on_visit(ExprVisitor& vi) override;
+    void on_visit(ExprVisitor* vi) override;
 
     std::string name_;
     ExprBase* arg_;

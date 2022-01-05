@@ -70,7 +70,7 @@ void CG::build_blocks() {
         auto id = ast_bb.ID;
         ir_builder_.SetInsertPoint(cg_visitor.bb_map[id]);
         for(auto& line : ast_bb.lines) {
-            line->on_visit(cg_visitor);
+            line->on_visit(&cg_visitor);
             cg_visitor.clear_value_stack();
         }
     }

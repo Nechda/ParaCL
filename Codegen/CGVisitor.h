@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AST/AST.h"
+#include "AST/ASTVisitor.h"
 
 #include "llvm/IR/Function.h"
 #include "llvm/IR/BasicBlock.h"
@@ -11,7 +11,7 @@
 #include <string>
 #include <stack>
 
-struct CodegenerationVisitor {
+struct CodegenerationVisitor : public AST::IVisitor {
     CodegenerationVisitor(llvm::IRBuilder<>& builder) : ir_builder(builder) {}
     std::unordered_map<std::string, llvm::Value*> named_value;
     std::unordered_map<unsigned, llvm::BasicBlock*> bb_map;

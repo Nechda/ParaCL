@@ -9,11 +9,11 @@ void CodegenerationVisitor::visit(AST::ConstLineral& node) {
 }
 
 void CodegenerationVisitor::visit(AST::BinaryInst& node) {
-    node.lhs_->on_visit(*this);
+    node.lhs_->on_visit(this);
     auto lhs_value = value_stack_.top();
     value_stack_.pop();
 
-    node.rhs_->on_visit(*this);
+    node.rhs_->on_visit(this);
     auto rhs_value = value_stack_.top();
     value_stack_.pop();
 
@@ -34,7 +34,7 @@ void CodegenerationVisitor::visit(AST::CondBranchInst& node) {
     auto bb_cond = bb_map[node.bb_cond_];
     auto bb_next = bb_map[node.bb_next_];
 
-    node.cond_->on_visit(*this);
+    node.cond_->on_visit(this);
     auto cond_value = value_stack_.top();
     value_stack_.pop();
 
@@ -53,11 +53,11 @@ void CodegenerationVisitor::visit(AST::Variable& node) {
 }
 
 void CodegenerationVisitor::visit(AST::AssignInst& node) {
-    node.rhs_->on_visit(*this);
+    node.rhs_->on_visit(this);
     auto rhs_value = value_stack_.top();
     value_stack_.pop();
 
-    node.lhs_->on_visit(*this);
+    node.lhs_->on_visit(this);
     auto lhs_addr = value_stack_.top();
     value_stack_.pop();
 
@@ -66,7 +66,7 @@ void CodegenerationVisitor::visit(AST::AssignInst& node) {
 }
 
 void CodegenerationVisitor::visit(AST::FunctionCall& node) {
-    node.arg_->on_visit(*this);
+    node.arg_->on_visit(this);
     auto arg_value = value_stack_.top();
     value_stack_.pop();
 
