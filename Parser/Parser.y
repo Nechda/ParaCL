@@ -35,6 +35,13 @@
 %token <int>  R_BRA
 %token <int>  ASSIGN
 
+%token <int>  EQ   // equal
+%token <int>  NE   // not equal
+%token <int>  GE   // greater or equal
+%token <int>  LE   // less or equal
+%token <int>  GT   // greater than
+%token <int>  LT   // less than
+
 %left <int>  PLUS
 %left <int>  MINUS
 %left <int>  MUL
@@ -83,6 +90,12 @@ expr_gen: expr_void | expr_ret;
 expr_ret:   NUM                        { $$ = new AST::ConstLineral(atoi($1.c_str()));}
           | NAME                       { $$ = new AST::Variable($1); drv.result.variables.insert($1); }
           | expr_ret ASSIGN expr_ret   { $$ = new AST::AssignInst($1, $3); }
+          | expr_ret GT expr_ret       { $$ = new AST::BinaryInst($1, $3, AST::BinaryInst::OP::GT); }
+          | expr_ret LT expr_ret       { $$ = new AST::BinaryInst($1, $3, AST::BinaryInst::OP::LT); }
+          | expr_ret GE expr_ret       { $$ = new AST::BinaryInst($1, $3, AST::BinaryInst::OP::GE); }
+          | expr_ret LE expr_ret       { $$ = new AST::BinaryInst($1, $3, AST::BinaryInst::OP::LE); }
+          | expr_ret EQ expr_ret       { $$ = new AST::BinaryInst($1, $3, AST::BinaryInst::OP::EQ); }
+          | expr_ret NE expr_ret       { $$ = new AST::BinaryInst($1, $3, AST::BinaryInst::OP::NE); }
           | expr_ret DIV expr_ret      { $$ = new AST::BinaryInst($1, $3, AST::BinaryInst::OP::DIV); }
           | expr_ret MUL expr_ret      { $$ = new AST::BinaryInst($1, $3, AST::BinaryInst::OP::MUL); }
           | expr_ret MINUS expr_ret    { $$ = new AST::BinaryInst($1, $3, AST::BinaryInst::OP::SUB); }

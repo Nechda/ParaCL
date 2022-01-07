@@ -16,8 +16,16 @@
 "-"            {return yy::parser::token::TOK_MINUS;}
 "*"            {return yy::parser::token::TOK_MUL;}
 "/"            {return yy::parser::token::TOK_DIV;}
+
+"=="           {return yy::parser::token::TOK_EQ;}
+"!="           {return yy::parser::token::TOK_NE;}
+">="           {return yy::parser::token::TOK_GE;}
+"<="           {return yy::parser::token::TOK_LE;}
+">"            {return yy::parser::token::TOK_GT;}
+"<"            {return yy::parser::token::TOK_LT;}
+
 "="            {return yy::parser::token::TOK_ASSIGN;}
-[;]            {return yy::parser::token::TOK_SEMI;}
+";"            {return yy::parser::token::TOK_SEMI;}
 "if"           {return yy::parser::token::TOK_IF;}
 "("            {return yy::parser::token::TOK_L_PAR;}
 ")"            {return yy::parser::token::TOK_R_PAR;}

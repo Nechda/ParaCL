@@ -48,12 +48,25 @@ void CodegenerationVisitor::visit(AST::BinaryInst& node) {
     rhs_value = node.rhs_->is_ptr() ? ir_builder.CreateLoad(rhs_value) : rhs_value;
 
     switch (node.op_) {
-        case AST::BinaryInst::OP::ADD: value_stack_.push(ir_builder.CreateAdd(lhs_value, rhs_value)); break;
-        case AST::BinaryInst::OP::SUB: value_stack_.push(ir_builder.CreateSub(lhs_value, rhs_value)); break;
-        case AST::BinaryInst::OP::MUL: value_stack_.push(ir_builder.CreateMul(lhs_value, rhs_value)); break;
-        case AST::BinaryInst::OP::DIV: value_stack_.push(ir_builder.CreateFDiv(lhs_value, rhs_value));break;
+        case AST::BinaryInst::OP::ADD: value_stack_.push(ir_builder.CreateAdd(lhs_value, rhs_value)); return;
+        case AST::BinaryInst::OP::SUB: value_stack_.push(ir_builder.CreateSub(lhs_value, rhs_value)); return;
+        case AST::BinaryInst::OP::MUL: value_stack_.push(ir_builder.CreateMul(lhs_value, rhs_value)); return;
+        case AST::BinaryInst::OP::DIV: value_stack_.push(ir_builder.CreateFDiv(lhs_value, rhs_value));return;
+
+        case AST::BinaryInst::OP::GT:  value_stack_.push(ir_builder.CreateICmpSGT(lhs_value, rhs_value)); break;
+        case AST::BinaryInst::OP::LT:  value_stack_.push(ir_builder.CreateICmpSLT(lhs_value, rhs_value)); break;
+        case AST::BinaryInst::OP::GE:  value_stack_.push(ir_builder.CreateICmpSGE(lhs_value, rhs_value)); break;
+        case AST::BinaryInst::OP::LE:  value_stack_.push(ir_builder.CreateICmpSLE(lhs_value, rhs_value)); break;
+
+        case AST::BinaryInst::OP::EQ:  value_stack_.push(ir_builder.CreateICmpEQ(lhs_value, rhs_value)); break;
+        case AST::BinaryInst::OP::NE:  value_stack_.push(ir_builder.CreateICmpNE(lhs_value, rhs_value)); break;
         default: break;
     }
+
+    // need cast to i32
+    auto i1_value = value_stack_.top();
+    value_stack_.pop();
+    value_stack_.push(ir_builder.CreateIntCast(i1_value, ir_builder.getInt32Ty(), 1));
 }
 
 void CodegenerationVisitor::visit(AST::CondBranchInst& node) {

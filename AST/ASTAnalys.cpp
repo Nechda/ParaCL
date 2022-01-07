@@ -19,9 +19,9 @@ static std::vector<Edge_t> ast_edges;
 static void rewrite_branches(std::vector<Block>& bloks, unsigned cur_bb, unsigned next_bb) {
     auto& bb = bloks[cur_bb];
 
-    auto last_inst = bb.lines.back();
-    if(last_inst->is_brnch()) {
-        auto casted_inst = reinterpret_cast<CondBranchInst*>(last_inst);
+    bool last_branch = bb.lines.size() == 0 ? 0 : bb.lines.back()->is_brnch();
+    if(last_branch) {
+        auto casted_inst = reinterpret_cast<CondBranchInst*>(bb.lines.back());
         if(casted_inst->bb_next_ < bloks.size()) ast_edges.push_back({cur_bb, casted_inst->bb_next_});
         if(casted_inst->bb_cond_ < bloks.size()) ast_edges.push_back({cur_bb, casted_inst->bb_cond_});
         rewrite_branches(bloks, casted_inst->bb_next_, next_bb);

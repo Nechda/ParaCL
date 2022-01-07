@@ -34,6 +34,12 @@ struct BinaryInst : public ExprBase {
         SUB,
         MUL,
         DIV,
+        GT,
+        LT,
+        GE,
+        LE,
+        EQ,
+        NE,
         UNDEFINED
     };
 
@@ -41,7 +47,7 @@ struct BinaryInst : public ExprBase {
         lhs_(lhs), rhs_(rhs), op_(operation) {}
     
     void dump() override {
-        const char* op_s = "+-*/";
+        std::string op_s[] = {"+","-","*","/", ">", "<", ">=", "<=", "==", "!="};
         lhs_->dump();
         std::cout << op_s[op_];
         rhs_->dump();
