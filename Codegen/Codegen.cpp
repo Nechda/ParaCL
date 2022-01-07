@@ -50,25 +50,21 @@ void CG::define_blocks(Function& func) {
         cg_visitor.bb_map[id] = llvm_bb;
     }
 
-    /* Hack for variables */
-    auto& variables = ast_.variables;
-    ir_builder_.SetInsertPoint(entry_bb);
-    for(auto& var_name : variables) {
-        std::string tmp = var_name + "_ptr";
-        auto var_ptr = ir_builder_.CreateAlloca(ir_builder_.getInt32Ty(), 0, tmp);
-        cg_visitor.named_value[var_name] = var_ptr;
-    }
-
     /* Jmp to the actual entry block */
+    ir_builder_.SetInsertPoint(entry_bb);
     ir_builder_.CreateBr(cg_visitor.bb_map[blocks.size() - 1]);
 }
 
 void CG::build_blocks() {
     /* Generate LLVM IR for each ast-block */
-    auto& blocks = ast_.blocks;
-    for(auto& ast_bb : blocks) {
-        auto id = ast_bb.ID;
-        ir_builder_.SetInsertPoint(cg_visitor.bb_map[id]);
+
+    auto heights = AST::create_height_array(ast_);
+    auto dfs_order = AST::create_dfs_order(ast_);
+    for(const auto& bb_idx : dfs_order) {
+        auto& ast_bb = ast_.blocks[bb_idx];
+
+        ir_builder_.SetInsertPoint(cg_visitor.bb_map[bb_idx]);
+        cg_visitor.height_align(heights[bb_idx]);
         for(auto& line : ast_bb.lines) {
             line->on_visit(&cg_visitor);
             cg_visitor.clear_value_stack();

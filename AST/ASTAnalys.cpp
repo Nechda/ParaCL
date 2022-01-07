@@ -116,6 +116,10 @@ void AST::generate_dominator_tree(ASTContext& ctx) {
 }
 
 std::vector<int> AST::create_dfs_order(AST::ASTContext& ast) {
+    if(ast.blocks.size() == 1) {
+        return {0};
+    }
+
     std::vector<int> tmp;
     std::vector<int> dfs_order;
 
@@ -147,6 +151,10 @@ std::vector<int> AST::create_dfs_order(AST::ASTContext& ast) {
 }
 
 std::vector<int> AST::create_height_array(AST::ASTContext& ast) {
+    if(ast.blocks.size() == 1) {
+        return {0};
+    }
+
     std::vector<int> height_map(ast.blocks.size(), -1);
     std::vector<int> tmp;
 

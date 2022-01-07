@@ -85,9 +85,7 @@ struct BranchInst : public ExprBase {
         : bb_next_(bb_next)
         {}
     void dump() override {
-        std::cout << "branch node{\n";
-        std::cout << "next block = " << bb_next_ << std::endl;
-        std::cout << "}";
+        std::cout << "Unconditional branch next block = " << bb_next_ << std::endl;
         
     }
     

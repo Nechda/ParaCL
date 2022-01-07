@@ -1,7 +1,33 @@
 #include "Codegen/CGVisitor.h"
+#include <cassert>
 
 void CodegenerationVisitor::clear_value_stack() {
     value_stack_ = {};
+}
+
+/* This method keep valid list of variables */
+void CodegenerationVisitor::height_align(int height) {
+    assert(height >= 0);
+
+    while(blocks_variable.size() > height) {
+        blocks_variable.pop_back();
+    }
+
+    blocks_variable.push_back({});
+}
+
+llvm::Value* CodegenerationVisitor::search_variable(std::string& name) {
+    llvm::Value* result = nullptr;
+
+    auto it = blocks_variable.rbegin();
+    auto end_it = blocks_variable.rend();
+    for(; it != end_it && !result; ++it) {
+        auto& mapa = *it;
+        auto search_it = mapa.find(name);
+        result = search_it != mapa.end() ? search_it->second : result;
+    }
+
+    return result;
 }
 
 void CodegenerationVisitor::visit(AST::ConstLineral& node) {
@@ -49,7 +75,7 @@ void CodegenerationVisitor::visit(AST::BranchInst& node) {
 }
 
 void CodegenerationVisitor::visit(AST::Variable& node) {
-    value_stack_.push(named_value[node.name_]);
+    value_stack_.push(search_variable(node.name_));
 }
 
 void CodegenerationVisitor::visit(AST::AssignInst& node) {
@@ -60,6 +86,15 @@ void CodegenerationVisitor::visit(AST::AssignInst& node) {
     node.lhs_->on_visit(this);
     auto lhs_addr = value_stack_.top();
     value_stack_.pop();
+    if(lhs_addr == nullptr) {
+        // dont panic, we just create new variable
+        auto var_node = *reinterpret_cast<AST::Variable*>(node.lhs_);
+        auto& last_mapa = blocks_variable.back();
+
+        auto var_ptr = ir_builder.CreateAlloca(ir_builder.getInt32Ty(), 0, var_node.name_ + "_ptr");
+        last_mapa[var_node.name_] = var_ptr;
+        lhs_addr = var_ptr;
+    }
 
     ir_builder.CreateStore(rhs_value, lhs_addr);
     value_stack_.push(rhs_value);
