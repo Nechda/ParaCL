@@ -96,6 +96,9 @@ void CodegenerationVisitor::visit(AST::AssignInst& node) {
     auto rhs_value = value_stack_.top();
     value_stack_.pop();
 
+    /* Load value of variable */
+    rhs_value = node.rhs_->is_ptr() ? ir_builder.CreateLoad(rhs_value) : rhs_value;
+
     node.lhs_->on_visit(this);
     auto lhs_addr = value_stack_.top();
     value_stack_.pop();
