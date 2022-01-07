@@ -6,12 +6,16 @@
 #include "JIT/JIT.h"
 #include "Interpret/Interpret.h"
 
+#include <vector>
+
 
 auto GenerateAST() {
     Driver dr;
     int ret_code = dr.parse();
     return dr.result;
 }
+
+
 
 int main(int argc, char** argv) {
 
@@ -21,9 +25,7 @@ int main(int argc, char** argv) {
 
     auto ast = GenerateAST();
     AST::complete_cfg(ast);
-
-    Interpretator interpret(ast);
-    interpret.run();
+    AST::generate_dominator_tree(ast);
 
     #if 0
 
@@ -32,6 +34,11 @@ int main(int argc, char** argv) {
     auto module = std::move(cg.build_module());
 
     llvm::orc::execute_module(llvm::orc::ThreadSafeModule(std::move(module), std::move(ll_ctx)));
+
+    #else 
+
+    Interpretator interpret(ast);
+    interpret.run();
 
     #endif
 

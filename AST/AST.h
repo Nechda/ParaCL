@@ -164,10 +164,14 @@ struct Block {
 
 struct ASTContext {
     std::vector<Block> blocks;
+    std::vector<std::pair<int, int>> dom_edges;
     std::unordered_set<std::string> variables;
     std::unordered_set<std::string> functions;
 };
 
 void complete_cfg(ASTContext&);
+void generate_dominator_tree(ASTContext&);
+std::vector<int> create_dfs_order(AST::ASTContext&);
+std::vector<int> create_height_array(AST::ASTContext&);
 
 }
