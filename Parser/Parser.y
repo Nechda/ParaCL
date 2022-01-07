@@ -28,6 +28,7 @@
 %token <std::string> NAME
 
 %token <int>  IF
+%token <int>  WHILE
 
 %token <int>  L_PAR
 %token <int>  R_PAR
@@ -72,12 +73,21 @@ block: lines IF L_PAR expr_ret R_PAR L_BRA block R_BRA block
                auto& cond_block = $7;
                auto& next_block = $9;
                cmds.push_back(new AST::CondBranchInst($4, cond_block.ID, next_block.ID));
-               $$ = AST::Block(cmds);
+               $$ = AST::Block(cmds, AST::Block::BranchReason::IF);
+               drv.result.blocks.push_back($$);
+          }
+     | lines WHILE L_PAR expr_ret R_PAR L_BRA block R_BRA block
+          {
+               auto& cmds = $1;
+               auto& cond_block = $7;
+               auto& next_block = $9;
+               cmds.push_back(new AST::CondBranchInst($4, cond_block.ID, next_block.ID));
+               $$ = AST::Block(cmds, AST::Block::BranchReason::WHILE);
                drv.result.blocks.push_back($$);
           }
      | lines 
           {
-               $$ = AST::Block($1);
+               $$ = AST::Block($1, AST::Block::BranchReason::NONE);
                drv.result.blocks.push_back($$);
           }
 ;

@@ -27,6 +27,7 @@
 "="            {return yy::parser::token::TOK_ASSIGN;}
 ";"            {return yy::parser::token::TOK_SEMI;}
 "if"           {return yy::parser::token::TOK_IF;}
+"while"        {return yy::parser::token::TOK_WHILE;}
 "("            {return yy::parser::token::TOK_L_PAR;}
 ")"            {return yy::parser::token::TOK_R_PAR;}
 "{"            {return yy::parser::token::TOK_L_BRA;}

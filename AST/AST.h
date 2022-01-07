@@ -61,7 +61,16 @@ struct BinaryInst : public ExprBase {
     OP op_;
 };
 
-struct CondBranchInst : public ExprBase {
+struct BranchInstBase : public ExprBase {
+    enum BranchType {
+        Uncondition,
+        Condition
+    };
+    virtual BranchType get_type() = 0;
+    bool is_brnch() override { return true; }
+};
+
+struct CondBranchInst : public BranchInstBase {
     CondBranchInst(ExprBase* cond, unsigned bb_for_cond, unsigned bb_next)
         : cond_(cond),
           bb_cond_(bb_for_cond),
@@ -79,14 +88,14 @@ struct CondBranchInst : public ExprBase {
     }
     
     void on_visit(ExprVisitor* vi) override;
+    BranchType get_type() override { return BranchType::Condition; }
 
-    bool is_brnch() { return true; }
     ExprBase* cond_;
     unsigned bb_cond_ = -1;
     unsigned bb_next_ = -1;
 };
 
-struct BranchInst : public ExprBase {
+struct BranchInst : public BranchInstBase {
     BranchInst(unsigned bb_next)
         : bb_next_(bb_next)
         {}
@@ -96,8 +105,8 @@ struct BranchInst : public ExprBase {
     }
     
     void on_visit(ExprVisitor* vi) override;
+    BranchType get_type() override { return BranchType::Uncondition; }
 
-    bool is_brnch() { return true; }
     unsigned bb_next_ = -1;
 };
 
@@ -148,11 +157,17 @@ struct FunctionCall : public ExprBase {
 };
 
 struct Block {
+    enum BranchReason {
+        NONE,
+        IF,
+        WHILE
+    };
     static unsigned total_blocks;
     Block() {}
-    Block(std::vector<ExprBase*> lines_tmp)
+    Block(std::vector<ExprBase*> lines_tmp, BranchReason br_reason)
         :
-        ID(total_blocks), lines(std::move(lines_tmp)) {total_blocks++;}
+        ID(total_blocks), lines(std::move(lines_tmp)),
+        reason(br_reason) {total_blocks++;}
 
     void dump() {
         std::cout << "===== Block " << ID << " =====" << std::endl;
@@ -164,6 +179,7 @@ struct Block {
     }
     unsigned ID = 0;
     std::vector<ExprBase*> lines;
+    BranchReason reason;
 };
 
 struct ASTContext {

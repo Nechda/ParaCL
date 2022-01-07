@@ -13,23 +13,36 @@ using namespace AST;
 
 unsigned Block::total_blocks = 0;
 
-using Edge_t = std::pair<int, int>;
-static std::vector<Edge_t> ast_edges;
+static std::vector<ExprBase*> branch_inst_stack;
 
-static void rewrite_branches(std::vector<Block>& bloks, unsigned cur_bb, unsigned next_bb) {
+static void rewrite_branches(std::vector<Block>& bloks, unsigned cur_bb) {
     auto& bb = bloks[cur_bb];
 
-    bool last_branch = bb.lines.size() == 0 ? 0 : bb.lines.back()->is_brnch();
-    if(last_branch) {
-        auto casted_inst = reinterpret_cast<CondBranchInst*>(bb.lines.back());
-        if(casted_inst->bb_next_ < bloks.size()) ast_edges.push_back({cur_bb, casted_inst->bb_next_});
-        if(casted_inst->bb_cond_ < bloks.size()) ast_edges.push_back({cur_bb, casted_inst->bb_cond_});
-        rewrite_branches(bloks, casted_inst->bb_next_, next_bb);
-        rewrite_branches(bloks, casted_inst->bb_cond_, casted_inst->bb_next_);
-    } else {
-        // need insert
-        if(next_bb < bloks.size()) ast_edges.push_back({cur_bb, next_bb});
-        bb.lines.push_back(new BranchInst(next_bb));
+
+    if(bb.reason == Block::BranchReason::NONE) {
+        bb.lines.push_back(branch_inst_stack.back());
+        branch_inst_stack.pop_back();
+        return;
+    }
+
+    if(bb.reason == Block::BranchReason::IF) {
+        auto br_inst = dynamic_cast<CondBranchInst*>(bb.lines.back());
+
+        branch_inst_stack.push_back(new BranchInst(br_inst->bb_next_));
+        rewrite_branches(bloks, br_inst->bb_cond_);
+
+        rewrite_branches(bloks, br_inst->bb_next_);
+        return;
+    }
+
+    if(bb.reason == Block::BranchReason::WHILE) {
+        auto br_inst = dynamic_cast<CondBranchInst*>(bb.lines.back());
+
+        branch_inst_stack.push_back(bb.lines.back()); // this is really bad, temp sollution ...
+        rewrite_branches(bloks, br_inst->bb_cond_);
+
+        rewrite_branches(bloks, br_inst->bb_next_);
+        return;
     }
 }
 
@@ -37,12 +50,15 @@ void AST::complete_cfg(ASTContext& ctx) {
     auto& bloks = ctx.blocks;
     auto entry_bb_id = bloks.size() - 1; 
     auto special_bb_id = bloks.size(); /* This bb will contain only ret operation */
-    rewrite_branches(bloks, entry_bb_id, special_bb_id);
+
+    branch_inst_stack.push_back(new BranchInst(special_bb_id));
+    rewrite_branches(bloks, entry_bb_id);
 }
 
 
 using namespace boost;
 using G = adjacency_list<listS, listS, bidirectionalS, property<vertex_index_t, std::size_t>, no_property>;
+using Edge_t = std::pair<int, int>;
 
 static std::vector<Edge_t> build_dominator_tree(std::vector<Edge_t>& edges, const int n_vertices) {
     G graph(edges.begin(), edges.end(), n_vertices);
@@ -97,11 +113,42 @@ static std::vector<Edge_t> build_dominator_tree(std::vector<Edge_t>& edges, cons
    return result;
 }
 
+static std::vector<Edge_t> get_ast_edges(ASTContext& ctx, bool ignore_special = true) {
+    std::vector<Edge_t> edges;
+    for(auto& bb : ctx.blocks) {
+        for(auto& line : bb.lines) {
+            if(!line->is_brnch()) continue;
+
+            auto branch_base = dynamic_cast<BranchInstBase*>(line);
+            if(branch_base->get_type() == BranchInstBase::BranchType::Uncondition) {
+                auto br_inst = dynamic_cast<BranchInst*>(branch_base);
+                edges.push_back({bb.ID, br_inst->bb_next_});
+            } else {
+                auto br_inst = dynamic_cast<CondBranchInst*>(branch_base);
+                edges.push_back({bb.ID, br_inst->bb_next_});
+                edges.push_back({bb.ID, br_inst->bb_cond_});
+            }
+        }
+    }
+
+    /* Remove edges to special blocks */
+    edges.erase(std::remove_if(edges.begin(), edges.end(),
+        [&](const Edge_t& edge){
+            const auto special_id = ctx.blocks.size();
+            return ignore_special && (edge.first == special_id || edge.second == special_id);
+        }
+    ), edges.end());
+
+    return edges;
+}
+
 void AST::generate_dominator_tree(ASTContext& ctx) {
     auto inv = [&](Edge_t& cur) {
         cur.first = ctx.blocks.size() - 1 - cur.first;
         cur.second = ctx.blocks.size() - 1 - cur.second;
     };
+
+    auto ast_edges = get_ast_edges(ctx);
 
     // Need inverse indices of blocks
     std::for_each(ast_edges.begin(), ast_edges.end(), inv);
