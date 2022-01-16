@@ -18,6 +18,8 @@ class CG {
 
     std::unique_ptr<llvm::Module> build_module();
 
+    static void dump_module(const llvm::Module &module);
+
   private:
     AST::ASTContext &ast_;
     llvm::LLVMContext &ll_ctx_;
@@ -28,5 +30,4 @@ class CG {
     void define_blocks(llvm::Function &func);
     void build_blocks();
     void optimize_module(llvm::Module &module);
-    void dump_module(llvm::Module &module);
 };

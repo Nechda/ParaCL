@@ -2,7 +2,7 @@
 
 %{
 
-#include "Parser.hh"
+#include "Parser.h"
 
 %}
 

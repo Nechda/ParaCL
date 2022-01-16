@@ -79,15 +79,13 @@ void CG::optimize_module(Module &module) {
         FPM.run(f);
 }
 
-void CG::dump_module(Module &module) {
+void CG::dump_module(const Module &module) {
     /* Dump generated module */
     std::string out_str;
     llvm::raw_string_ostream os(out_str);
     module.print(os, nullptr);
     os.flush();
-    printf("#[LLVM IR]:\n");
-    printf("%s", out_str.c_str());
-    printf("#[=======]\n");
+    std::cerr << out_str;
 }
 
 std::unique_ptr<Module> CG::build_module() {
@@ -96,6 +94,5 @@ std::unique_ptr<Module> CG::build_module() {
     define_blocks(*main_fu);
     build_blocks();
     optimize_module(*main_module);
-    dump_module(*main_module);
     return std::move(main_module);
 }

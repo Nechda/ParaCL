@@ -1,5 +1,5 @@
-#include "Driver.hh"
-#include "Parser.hh"
+#include "Driver.h"
+#include "Parser.h"
 
 std::unique_ptr<AST::ASTContext> Driver::parse() {
     yy::parser parser(*this);

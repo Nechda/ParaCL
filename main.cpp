@@ -3,10 +3,20 @@
 #include "Codegen/Codegen.h"
 #include "Interpret/Interpret.h"
 #include "JIT/JIT.h"
-#include "Parser/Driver.hh"
+#include "Parser/Driver.h"
 #include <iostream>
 
+#include "llvm/Support/CommandLine.h"
+
+enum ExecMode { jit, interpretator };
+llvm::cl::opt<ExecMode> exec_mode(llvm::cl::desc("Choose execution mode:"),
+                                  llvm::cl::values(clEnumVal(jit, "Use llvm's jit for execution"),
+                                                   clEnumVal(interpretator, "Use interpretator for execution")));
+llvm::cl::opt<bool> dump_module("dump-module", llvm::cl::desc("Dump llvm module to cerr"));
+
 int main(int argc, char **argv) {
+    llvm::cl::ParseCommandLineOptions(argc, argv);
+
     std::unique_ptr<AST::ASTContext> ast;
     try {
         ast = Driver().parse();
@@ -29,18 +39,19 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-#if 1
+    if (dump_module) {
+        CG::dump_module(*module);
+    }
 
-    llvm::InitializeNativeTarget();
-    llvm::InitializeNativeTargetAsmPrinter();
-    llvm::orc::execute_module(llvm::orc::ThreadSafeModule(std::move(module), std::move(ll_ctx)));
-
-#else
-
-    Interpretator interpret(ast);
-    interpret.run();
-
-#endif
+    if (exec_mode == jit) {
+        llvm::InitializeNativeTarget();
+        llvm::InitializeNativeTargetAsmPrinter();
+        llvm::orc::execute_module(llvm::orc::ThreadSafeModule(std::move(module), std::move(ll_ctx)));
+    }
+    if (exec_mode == interpretator) {
+        Interpretator interpret(*ast);
+        interpret.run();
+    }
 
     return 0;
 }

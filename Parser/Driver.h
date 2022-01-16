@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AST/AST.h"
-#include "Parser.hh"
+#include "Parser.h"
 #include <FlexLexer.h>
 #include <iostream>
 #include <memory>

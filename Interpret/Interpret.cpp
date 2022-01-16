@@ -1,6 +1,6 @@
 #include "Interpret/Interpret.h"
 #include "AST/ASTVisitor.h"
-#include "Runtime/runtime.h"
+#include "Runtime/Runtime.h"
 
 #include <stack>
 #include <string>
@@ -66,13 +66,13 @@ struct ExecutionVisitor : public AST::IVisitor {
 
     void visit(AST::AssignInst &node) {
         ASSERT(node.lhs_->is_ptr());
-        auto &variable_node = *reinterpret_cast<AST::Variable *>(node.lhs_);
+        auto variable_node = dynamic_cast<AST::Variable *>(node.lhs_);
 
         node.rhs_->on_visit(this);
         auto rhs_value = value_stack_.top();
         value_stack_.pop();
 
-        variables_[variable_node.name_] = rhs_value;
+        variables_[variable_node->name_] = rhs_value;
 
         value_stack_.push(rhs_value);
     }
@@ -86,7 +86,7 @@ struct ExecutionVisitor : public AST::IVisitor {
 
         // TODO: create runtime interface for it
         if (node.name_ == "print") {
-            print(arg_value);
+            Runtime::print(arg_value);
         } else {
             ASSERT(!"This function is not supported.");
         }

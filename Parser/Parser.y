@@ -17,7 +17,7 @@
 %param { Driver& drv }
 
 %code {
-    #include "Parser/Driver.hh"
+    #include "Parser/Driver.h"
 
     yy::parser::token_type yylex(yy::parser::semantic_type* yylval, Driver& drv);
 

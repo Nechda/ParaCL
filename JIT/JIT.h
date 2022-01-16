@@ -23,7 +23,7 @@
 #include "llvm/Transforms/Utils/SplitModule.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 
-#include "Runtime/runtime.h"
+#include "Runtime/Runtime.h"
 
 namespace llvm {
 namespace orc {
@@ -70,9 +70,9 @@ class JIT {
 
         llvm::orc::SymbolMap runtimeSymbols;
         runtimeSymbols[Mangle("print")] =
-            llvm::JITEvaluatedSymbol(reinterpret_cast<llvm::JITTargetAddress>(print), functionFlags);
+            llvm::JITEvaluatedSymbol(reinterpret_cast<llvm::JITTargetAddress>(Runtime::print), functionFlags);
 
-        MainJD.define(llvm::orc::absoluteSymbols(runtimeSymbols));
+        cantFail(MainJD.define(llvm::orc::absoluteSymbols(runtimeSymbols)));
     }
 
   private:
@@ -92,7 +92,7 @@ class JIT {
 
 void execute_module(ThreadSafeModule TSM) {
     auto jit = cantFail(JIT::Create());
-    jit->addModule(TSM);
+    cantFail(jit->addModule(TSM));
 
     auto main_func_sym = cantFail(jit->lookup("main"));
     auto main_func = jitTargetAddressToFunction<void (*)()>(main_func_sym.getAddress());
