@@ -58,8 +58,8 @@ void CG::define_blocks(Function& func) {
 void CG::build_blocks() {
     /* Generate LLVM IR for each ast-block */
 
-    auto heights = AST::create_height_array(ast_);
-    auto dfs_order = AST::create_dfs_order(ast_);
+    auto heights = ast_.create_height_array();
+    auto dfs_order = ast_.create_dfs_order();
     for(const auto& bb_idx : dfs_order) {
         auto& ast_bb = ast_.blocks[bb_idx];
 

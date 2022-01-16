@@ -2,11 +2,16 @@
 #include "Parser.hh"
 
 
-int Driver::parse()
+std::unique_ptr<AST::ASTContext> Driver::parse()
 {
     yy::parser parser(*this);
     int ret_code = parser.parse();
-    return ret_code;
+    if(ret_code != 0)
+        throw std::runtime_error("Parser return non zero code");
+
+    auto ret_ctx = std::make_unique<AST::ASTContext>();
+    std::swap(*ret_ctx, result);
+    return std::move(ret_ctx);
 }
 
 Driver::token_type Driver::yylex(Driver::semantic_type* yylval) {

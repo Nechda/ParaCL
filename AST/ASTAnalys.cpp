@@ -1,4 +1,5 @@
 #include "AST/AST.h"
+#include "ScopePtr.h"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dominator_tree.hpp>
@@ -15,8 +16,10 @@ unsigned Block::total_blocks = 0;
 
 static std::vector<ExprBase*> branch_inst_stack;
 
-static void rewrite_branches(std::vector<Block>& bloks, unsigned cur_bb) {
-    auto& bb = bloks[cur_bb];
+AST::ExprBase* insert_helper(std::vector<AST::ExprBase*>& vec, AST::ExprBase* elem);
+
+void AST::ASTContext::rewrite_branches(unsigned cur_bb) {
+    auto& bb = blocks[cur_bb];
 
 
     if(bb.reason == Block::BranchReason::NONE) {
@@ -28,31 +31,33 @@ static void rewrite_branches(std::vector<Block>& bloks, unsigned cur_bb) {
     if(bb.reason == Block::BranchReason::IF) {
         auto br_inst = dynamic_cast<CondBranchInst*>(bb.lines.back());
 
-        branch_inst_stack.push_back(new BranchInst(br_inst->bb_next_));
-        rewrite_branches(bloks, br_inst->bb_cond_);
+        insert_helper(nodes, new BranchInst(br_inst->bb_next_));
+        branch_inst_stack.push_back(nodes.back());
+        rewrite_branches(br_inst->bb_cond_);
 
-        rewrite_branches(bloks, br_inst->bb_next_);
+        rewrite_branches(br_inst->bb_next_);
         return;
     }
 
     if(bb.reason == Block::BranchReason::WHILE) {
         auto br_inst = dynamic_cast<CondBranchInst*>(bb.lines.back());
 
-        branch_inst_stack.push_back(bb.lines.back()); // this is really bad, temp sollution ...
-        rewrite_branches(bloks, br_inst->bb_cond_);
+        branch_inst_stack.push_back(bb.lines.back());
+        rewrite_branches(br_inst->bb_cond_);
 
-        rewrite_branches(bloks, br_inst->bb_next_);
+        rewrite_branches(br_inst->bb_next_);
         return;
     }
 }
 
-void AST::complete_cfg(ASTContext& ctx) {
-    auto& bloks = ctx.blocks;
+void AST::ASTContext::complete_cfg() {
+    auto& bloks = blocks;
     auto entry_bb_id = bloks.size() - 1; 
     auto special_bb_id = bloks.size(); /* This bb will contain only ret operation */
 
-    branch_inst_stack.push_back(new BranchInst(special_bb_id));
-    rewrite_branches(bloks, entry_bb_id);
+    insert_helper(nodes, new BranchInst(special_bb_id));
+    branch_inst_stack.push_back(nodes.back());
+    rewrite_branches(entry_bb_id);
 }
 
 
@@ -142,40 +147,40 @@ static std::vector<Edge_t> get_ast_edges(ASTContext& ctx, bool ignore_special = 
     return edges;
 }
 
-void AST::generate_dominator_tree(ASTContext& ctx) {
+void AST::ASTContext::generate_dominator_tree() {
     auto inv = [&](Edge_t& cur) {
-        cur.first = ctx.blocks.size() - 1 - cur.first;
-        cur.second = ctx.blocks.size() - 1 - cur.second;
+        cur.first = blocks.size() - 1 - cur.first;
+        cur.second = blocks.size() - 1 - cur.second;
     };
 
-    auto ast_edges = get_ast_edges(ctx);
+    auto ast_edges = get_ast_edges(*this);
 
     // Need inverse indices of blocks
     std::for_each(ast_edges.begin(), ast_edges.end(), inv);
 
-    auto dom_edges = build_dominator_tree(ast_edges, ctx.blocks.size());
+    auto dom_edges_local = build_dominator_tree(ast_edges, blocks.size());
 
     // Inverse for getting actual indices
-    std::for_each(dom_edges.begin(), dom_edges.end(), inv);
+    std::for_each(dom_edges_local.begin(), dom_edges_local.end(), inv);
 
-    std::sort(dom_edges.begin(), dom_edges.end(), [](Edge_t& a, Edge_t& b) { return a.first < b.first; });
-    ctx.dom_edges = std::move(dom_edges);
+    std::sort(dom_edges_local.begin(), dom_edges_local.end(), [](Edge_t& a, Edge_t& b) { return a.first < b.first; });
+    dom_edges = std::move(dom_edges_local);
 }
 
-std::vector<int> AST::create_dfs_order(AST::ASTContext& ast) {
-    if(ast.blocks.size() == 1) {
+std::vector<int> AST::ASTContext::create_dfs_order() {
+    if(blocks.size() == 1) {
         return {0};
     }
 
     std::vector<int> tmp;
     std::vector<int> dfs_order;
 
-    std::vector<bool> is_leaf(ast.blocks.size(), 1);
-    for(auto& p : ast.dom_edges) {
+    std::vector<bool> is_leaf(blocks.size(), 1);
+    for(auto& p : dom_edges) {
         is_leaf[p.second] = 0;
     }
 
-    std::vector<bool> is_marked(ast.blocks.size(), 0);
+    std::vector<bool> is_marked(blocks.size(), 0);
     for(int i = 0; i < is_leaf.size(); i++) {
         if(!is_leaf[i]) continue;
 
@@ -184,7 +189,7 @@ std::vector<int> AST::create_dfs_order(AST::ASTContext& ast) {
         while(!is_marked[cur_node]) {
             is_marked[cur_node] = 1;
             tmp.push_back(cur_node);
-            cur_node = ast.dom_edges[cur_node].second;
+            cur_node = dom_edges[cur_node].second;
         }
 
         while(!tmp.empty()) {
@@ -197,20 +202,20 @@ std::vector<int> AST::create_dfs_order(AST::ASTContext& ast) {
     return dfs_order;
 }
 
-std::vector<int> AST::create_height_array(AST::ASTContext& ast) {
-    if(ast.blocks.size() == 1) {
+std::vector<int> AST::ASTContext::create_height_array() {
+    if(blocks.size() == 1) {
         return {0};
     }
 
-    std::vector<int> height_map(ast.blocks.size(), -1);
+    std::vector<int> height_map(blocks.size(), -1);
     std::vector<int> tmp;
 
-    std::vector<bool> is_leaf(ast.blocks.size(), 1);
-    for(auto& p : ast.dom_edges) {
+    std::vector<bool> is_leaf(blocks.size(), 1);
+    for(auto& p : dom_edges) {
         is_leaf[p.second] = 0;
     }
 
-    std::vector<bool> is_marked(ast.blocks.size(), 0);
+    std::vector<bool> is_marked(blocks.size(), 0);
     for(int i = 0; i < is_leaf.size(); i++) {
         if(!is_leaf[i]) continue;
 
@@ -219,12 +224,12 @@ std::vector<int> AST::create_height_array(AST::ASTContext& ast) {
         while(!is_marked[cur_node]) {
             is_marked[cur_node] = 1;
             tmp.push_back(cur_node);
-            cur_node = ast.dom_edges[cur_node].second;
+            cur_node = dom_edges[cur_node].second;
         }
 
         while(!tmp.empty()) {
             auto last = tmp.back();
-            auto idom = ast.dom_edges[last].second;
+            auto idom = dom_edges[last].second;
 
             height_map[last] = last == idom ? 0 : 1 + height_map[idom];
             tmp.pop_back();

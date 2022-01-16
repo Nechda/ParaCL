@@ -4,6 +4,7 @@
 #include <iostream>
 #include "Parser.hh"
 #include <FlexLexer.h>
+#include <memory>
 #include "AST/AST.h"
 
 class Driver {
@@ -13,7 +14,7 @@ class Driver {
 
     Driver() {}
 
-    int parse();
+    std::unique_ptr<AST::ASTContext> parse();
     token_type yylex(semantic_type* yylval);
 
 

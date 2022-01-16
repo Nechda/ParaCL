@@ -6,33 +6,34 @@
 #include "JIT/JIT.h"
 #include "Interpret/Interpret.h"
 
-#include <vector>
-
-
-auto GenerateAST() {
-    Driver dr;
-    int ret_code = dr.parse();
-    return dr.result;
-}
-
-
 
 int main(int argc, char** argv) {
+    std::unique_ptr<AST::ASTContext> ast;
+    try {
+        ast = Driver().parse();
+        ast->complete_cfg();
+        ast->generate_dominator_tree();
+    } catch (const std::exception &e) {
+        std::cout << "[[FRONT]] Catch unexpected exception:\n";
+        std::cout << e.what() << std::endl;
+        return 1;
+    }
 
-    llvm::InitLLVM X(argc, argv);
+    std::unique_ptr<llvm::LLVMContext> ll_ctx;
+    std::unique_ptr<llvm::Module> module;
+    try {
+        ll_ctx = std::make_unique<llvm::LLVMContext>();
+        module = CG(*ast, *ll_ctx).build_module();
+    } catch (const std::exception &e) {
+        std::cout << "[[CG]] Catch unexpected exception:\n";
+        std::cout << e.what() << std::endl;
+        return 1;
+    }
+
+    #if 1
+
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
-
-    auto ast = GenerateAST();
-    AST::complete_cfg(ast);
-    AST::generate_dominator_tree(ast);
-
-    #if 0
-
-    std::unique_ptr<llvm::LLVMContext> ll_ctx = std::make_unique<llvm::LLVMContext>();
-    CG cg(ast, *ll_ctx);
-    auto module = std::move(cg.build_module());
-
     llvm::orc::execute_module(llvm::orc::ThreadSafeModule(std::move(module), std::move(ll_ctx)));
 
     #else 

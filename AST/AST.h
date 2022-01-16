@@ -6,6 +6,10 @@
 #include <unordered_set>
 #include <string>
 
+namespace yy {
+    class parser;
+}
+
 namespace AST {
 
 struct IVisitor;
@@ -17,6 +21,7 @@ struct ExprBase {
     virtual bool is_brnch() {return false; } /* This expr is brach instr */
 
     virtual void on_visit(ExprVisitor*) = 0;
+    virtual ~ExprBase() {}
 };
 
 struct ConstLineral : public ExprBase {
@@ -25,6 +30,7 @@ struct ConstLineral : public ExprBase {
         std::cout << val_;
     }
     void on_visit(ExprVisitor* vi) override;
+    ~ConstLineral() {}
     int val_;
 };
 
@@ -55,6 +61,7 @@ struct BinaryInst : public ExprBase {
 
     
     void on_visit(ExprVisitor* vi) override;
+    ~BinaryInst() {}
 
     ExprBase* lhs_;
     ExprBase* rhs_;
@@ -68,6 +75,7 @@ struct BranchInstBase : public ExprBase {
     };
     virtual BranchType get_type() = 0;
     bool is_brnch() override { return true; }
+    ~BranchInstBase() {}
 };
 
 struct CondBranchInst : public BranchInstBase {
@@ -88,6 +96,7 @@ struct CondBranchInst : public BranchInstBase {
     }
     
     void on_visit(ExprVisitor* vi) override;
+    ~CondBranchInst() {}
     BranchType get_type() override { return BranchType::Condition; }
 
     ExprBase* cond_;
@@ -105,6 +114,7 @@ struct BranchInst : public BranchInstBase {
     }
     
     void on_visit(ExprVisitor* vi) override;
+    ~BranchInst() {}
     BranchType get_type() override { return BranchType::Uncondition; }
 
     unsigned bb_next_ = -1;
@@ -118,6 +128,7 @@ struct Variable : public ExprBase {
     
     bool is_ptr() override { return true; } /* Codegen function return an addr */
     void on_visit(ExprVisitor* vi) override;
+    ~Variable() {}
 
     std::string name_;
 };
@@ -136,6 +147,7 @@ struct AssignInst : public ExprBase {
 
     
     void on_visit(ExprVisitor* vi) override;
+    ~AssignInst() {}
 
     ExprBase* lhs_;
     ExprBase* rhs_;
@@ -151,6 +163,7 @@ struct FunctionCall : public ExprBase {
     }
     
     void on_visit(ExprVisitor* vi) override;
+    ~FunctionCall() {}
 
     std::string name_;
     ExprBase* arg_;
@@ -185,13 +198,24 @@ struct Block {
 struct ASTContext {
     std::vector<Block> blocks;
     std::vector<std::pair<int, int>> dom_edges;
-    std::unordered_set<std::string> variables;
     std::unordered_set<std::string> functions;
+
+    ~ASTContext() {
+        for(auto ptr : nodes)
+            delete ptr;
+    }
+
+    void complete_cfg();
+    void generate_dominator_tree();
+    std::vector<int> create_dfs_order();
+    std::vector<int> create_height_array();
+
+  private:
+    std::vector<ExprBase *> nodes;
+
+  private:
+    void rewrite_branches(unsigned cur_bb);
+
+    friend class yy::parser;
 };
-
-void complete_cfg(ASTContext&);
-void generate_dominator_tree(ASTContext&);
-std::vector<int> create_dfs_order(AST::ASTContext&);
-std::vector<int> create_height_array(AST::ASTContext&);
-
 }
