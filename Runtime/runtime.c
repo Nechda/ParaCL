@@ -1,8 +1,5 @@
 #include "Runtime/runtime.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-
-void print(int x) {
-    printf("%d\n",x);
-}
+void print(int x) { printf("%d\n", x); }

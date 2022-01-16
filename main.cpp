@@ -1,13 +1,12 @@
 
-#include <iostream>
-#include "Parser/Driver.hh"
 #include "AST/AST.h"
 #include "Codegen/Codegen.h"
-#include "JIT/JIT.h"
 #include "Interpret/Interpret.h"
+#include "JIT/JIT.h"
+#include "Parser/Driver.hh"
+#include <iostream>
 
-
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     std::unique_ptr<AST::ASTContext> ast;
     try {
         ast = Driver().parse();
@@ -30,18 +29,18 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    #if 1
+#if 1
 
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::orc::execute_module(llvm::orc::ThreadSafeModule(std::move(module), std::move(ll_ctx)));
 
-    #else 
+#else
 
     Interpretator interpret(ast);
     interpret.run();
 
-    #endif
+#endif
 
     return 0;
 }

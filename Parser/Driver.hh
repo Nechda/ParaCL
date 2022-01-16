@@ -1,11 +1,11 @@
-#pragma once 
+#pragma once
 
-#include <string>
-#include <iostream>
+#include "AST/AST.h"
 #include "Parser.hh"
 #include <FlexLexer.h>
+#include <iostream>
 #include <memory>
-#include "AST/AST.h"
+#include <string>
 
 class Driver {
   public:
@@ -15,8 +15,7 @@ class Driver {
     Driver() {}
 
     std::unique_ptr<AST::ASTContext> parse();
-    token_type yylex(semantic_type* yylval);
-
+    token_type yylex(semantic_type *yylval);
 
     AST::ASTContext result;
     yyFlexLexer lexer_;
